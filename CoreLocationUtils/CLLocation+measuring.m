@@ -191,6 +191,31 @@
     return result;
 }
 
++ (CLCoordinateRect) minimumBoundingBoxContainingLocations: (NSArray*)locations
+{
+    CLCoordinateRect result;
+    
+    if ([locations count] == 0) {
+        return result;
+    }
+    
+    result.topLeft = ((CLLocation*)[locations objectAtIndex:0]).coordinate;
+    result.bottomRight = result.topLeft;
+    
+    for (int i=1; i<[locations count]; i++) {
+        CLLocationCoordinate2D coord = ((CLLocation*)[locations objectAtIndex:i]).coordinate;
+        
+        CLCoordinateRect boundingBox = [CLLocation boundingBoxWithCenter:coord radius:[locations[i] horizontalAccuracy]];
+        
+        result.topLeft.latitude = MAX(result.topLeft.latitude, boundingBox.bottomRight.latitude);
+        result.topLeft.longitude = MIN(result.topLeft.longitude, boundingBox.bottomRight.longitude);
+        result.bottomRight.latitude = MIN(result.bottomRight.latitude, boundingBox.topLeft.latitude);
+        result.bottomRight.longitude = MAX(result.bottomRight.longitude, boundingBox.topLeft.longitude);
+    }
+    
+    return result;
+}
+
 
 //returns a direction (in degrees) between the receiver and the given location 
 - (CLLocationDirection)directionToLocation:(CLLocation*)location;
