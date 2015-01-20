@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name            = 'CoreLocationUtils'
   s.version         = '1.0'
-  s.platform        = :ios, '6.0'
+  s.platform        = :ios, '5.0'
   s.license         = 'MIT'
   s.summary         = 'CoreLocationUtils For Your iOS app.'
   s.homepage        = 'https://github.com/Notan/CoreLocationUtils'
