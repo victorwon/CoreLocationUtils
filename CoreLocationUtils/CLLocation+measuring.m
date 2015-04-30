@@ -93,12 +93,20 @@
 // identical to newLocationAtDistance:toLocation: but using coordinates
 + (CLLocationCoordinate2D) coordinateAtDistance:(CLLocationDistance)distance fromCoordinate:(CLLocationCoordinate2D)coord1 toCoordinate:(CLLocationCoordinate2D)coord2;
 {
-	double earthRadius = 6371.01; // Earth's radius in Kilometers
+
+    CLLocationDirection direction = [CLLocation directionFromCoordinate:coord1 toCoordinate:coord2];
+    
+    return [CLLocation coordinateAtDistance:distance fromCoordinate:coord1 inDirection:direction];
+
+}
+
++ (CLLocationCoordinate2D) coordinateAtDistance:(CLLocationDistance)distance fromCoordinate:(CLLocationCoordinate2D)coord1 inDirection:(CLLocationDirection)directionInDegrees
+{
+    double earthRadius = 6371.01; // Earth's radius in Kilometers
     double lat1 = coord1.latitude * kDegreesToRadians;
     double lon1 = coord1.longitude  * kDegreesToRadians;
-    CLLocationDirection direction = [CLLocation directionFromCoordinate:coord1 toCoordinate:coord2];
-    double dRad = direction * kDegreesToRadians;
-  
+    double dRad = directionInDegrees * kDegreesToRadians;
+
     double nD = distance / 1000; //distance travelled in km
     double nC = nD / earthRadius;
     double nA = acos(cos(nC)*cos(M_PI/2 - lat1) + sin(M_PI/2 - lat1)*sin(nC)*cos(dRad));
@@ -107,7 +115,6 @@
     double lon3 = (dLon + lon1) * kRadiansToDegrees;
     
     return CLLocationCoordinate2DMake(lat3, lon3);
-    
 }
 
 
