@@ -44,19 +44,19 @@
 - (CLLocationDistance) distanceFromCoordinate:(CLLocationCoordinate2D) fromCoord;
 {
 	double earthRadius = 6371.01; // Earth's radius in Kilometers
-	
+
 	// Get the difference between our two points then convert the difference into radians
-	double nDLat = (fromCoord.latitude - self.coordinate.latitude) * kDegreesToRadians;  
-	double nDLon = (fromCoord.longitude - self.coordinate.longitude) * kDegreesToRadians; 
-	
+	double nDLat = (fromCoord.latitude - self.coordinate.latitude) * kDegreesToRadians;
+	double nDLon = (fromCoord.longitude - self.coordinate.longitude) * kDegreesToRadians;
+
 	double fromLat =  self.coordinate.latitude * kDegreesToRadians;
 	double toLat =  fromCoord.latitude * kDegreesToRadians;
-	
+
 	double nA =	pow ( sin(nDLat/2), 2 ) + cos(fromLat) * cos(toLat) * pow ( sin(nDLon/2), 2 );
-	
+
 	double nC = 2 * atan2( sqrt(nA), sqrt( 1 - nA ));
 	double nD = earthRadius * nC;
-	
+
 	return nD * 1000; // Return our calculated distance in meters
 }
 
@@ -77,17 +77,17 @@
     double lon1 = self.coordinate.longitude  * kDegreesToRadians;
     CLLocationDirection direction = [self directionToLocation:destination];
     double dRad = direction * kDegreesToRadians;
-    
+
     double nD = distance / 1000; //distance travelled in km
     double nC = nD / earthRadius;
     double nA = acos(cos(nC)*cos(M_PI/2 - lat1) + sin(M_PI/2 - lat1)*sin(nC)*cos(dRad));
     double dLon = asin(sin(nC)*sin(dRad)/sin(nA));
-    
+
     double lat2 = (M_PI/2 - nA) * kRadiansToDegrees;
     double lon2 = (dLon + lon1) * kRadiansToDegrees;
-    
+
     return [[CLLocation alloc] initWithLatitude:lat2 longitude:lon2];
-    
+
 }
 
 // identical to newLocationAtDistance:toLocation: but using coordinates
@@ -95,7 +95,7 @@
 {
 
     CLLocationDirection direction = [CLLocation directionFromCoordinate:coord1 toCoordinate:coord2];
-    
+
     return [CLLocation coordinateAtDistance:distance fromCoordinate:coord1 inDirection:direction];
 
 }
@@ -113,7 +113,7 @@
     double dLon = asin(sin(nC)*sin(dRad)/sin(nA));
     double lat3 = (M_PI/2 - nA) * kRadiansToDegrees;
     double lon3 = (dLon + lon1) * kRadiansToDegrees;
-    
+
     return CLLocationCoordinate2DMake(lat3, lon3);
 }
 
@@ -124,34 +124,34 @@
     double lat1 = self.coordinate.latitude * kDegreesToRadians;
     double lon1 = self.coordinate.longitude  * kDegreesToRadians;
     double dRad = direction * kDegreesToRadians;
-    
+
     double nD = speed * duration / 1000; //distance travelled in km
     double nC = nD / earthRadius;
     double nA = acos(cos(nC)*cos(M_PI/2 - lat1) + sin(M_PI/2 - lat1)*sin(nC)*cos(dRad));
     double dLon = asin(sin(nC)*sin(dRad)/sin(nA));
-    
+
     double lat2 = (M_PI/2 - nA) * kRadiansToDegrees;
     double lon2 = (dLon + lon1) * kRadiansToDegrees;
     CLLocationCoordinate2D coord = CLLocationCoordinate2DMake(lat2, lon2);
-    
+
     NSDate *projectedTimeStamp = [NSDate dateWithTimeInterval:duration sinceDate:self.timestamp];
     return [[CLLocation alloc] initWithCoordinate:coord altitude:self.altitude horizontalAccuracy:self.horizontalAccuracy verticalAccuracy:self.verticalAccuracy course:direction speed:speed timestamp:projectedTimeStamp];
-    
+
 }
 
 + (CLCoordinateRect) boundingBoxWithCenter: (CLLocationCoordinate2D)centerCoordinate radius:(CLLocationDistance)radius;
 {
-	CLCoordinateRect result; 
+	CLCoordinateRect result;
 	double earthRadius = 6371.01 * 1000.0; //in meters
-	
+
 	// angular distance in radians on a great circle
 	double radDist = radius/ earthRadius;
-	double radLat = centerCoordinate.latitude * kDegreesToRadians; 
-	double radLon = centerCoordinate.longitude * kDegreesToRadians; 
-	
+	double radLat = centerCoordinate.latitude * kDegreesToRadians;
+	double radLon = centerCoordinate.longitude * kDegreesToRadians;
+
 	double minLat = radLat - radDist;
 	double maxLat = radLat + radDist;
-	
+
 	double minLon, maxLon;
 	if (minLat > -M_PI/2 && maxLat < M_PI/2) {
 		double deltaLon = asin(sin(radDist) / cos(radLat));
@@ -166,27 +166,27 @@
 		minLon = -M_PI;
 		maxLon = M_PI;
 	}
-	
+
 	result.bottomRight.latitude = minLat * kRadiansToDegrees;
 	result.topLeft.longitude = minLon  * kRadiansToDegrees;
 	result.topLeft.latitude = maxLat  * kRadiansToDegrees;
 	result.bottomRight.longitude = maxLon  * kRadiansToDegrees;
-    
-	return result; 
+
+	return result;
 }
 
 
 + (CLCoordinateRect) boundingBoxContainingLocations: (NSArray*)locations;
 {
-	CLCoordinateRect result; 
-    
+	CLCoordinateRect result;
+
     if ([locations count] == 0) {
         return result;
     }
-    
+
     result.topLeft = ((CLLocation*)[locations objectAtIndex:0]).coordinate;
     result.bottomRight = result.topLeft;
-       
+
     for (int i=1; i<[locations count]; i++) {
         CLLocationCoordinate2D coord = ((CLLocation*)[locations objectAtIndex:i]).coordinate;
         result.topLeft.latitude = MAX(result.topLeft.latitude, coord.latitude);
@@ -194,46 +194,105 @@
         result.bottomRight.latitude = MIN(result.bottomRight.latitude, coord.latitude);
         result.bottomRight.longitude = MAX(result.bottomRight.longitude, coord.longitude);
     }
-    
+
     return result;
 }
 
 + (CLCoordinateRect) minimumBoundingBoxContainingLocations: (NSArray*)locations
 {
     CLCoordinateRect result;
-    
+
     if ([locations count] == 0) {
         return result;
     }
-    
+
     result.topLeft = ((CLLocation*)[locations objectAtIndex:0]).coordinate;
     result.bottomRight = result.topLeft;
-    
+
     for (int i=1; i<[locations count]; i++) {
         CLLocationCoordinate2D coord = ((CLLocation*)[locations objectAtIndex:i]).coordinate;
-        
+
         CLCoordinateRect boundingBox = [CLLocation boundingBoxWithCenter:coord radius:[locations[i] horizontalAccuracy]];
-        
+
         result.topLeft.latitude = MAX(result.topLeft.latitude, boundingBox.bottomRight.latitude);
         result.topLeft.longitude = MIN(result.topLeft.longitude, boundingBox.bottomRight.longitude);
         result.bottomRight.latitude = MIN(result.bottomRight.latitude, boundingBox.topLeft.latitude);
         result.bottomRight.longitude = MAX(result.bottomRight.longitude, boundingBox.topLeft.longitude);
     }
-    
+
+    return result;
+}
+
+// A bounding box around all locations with an approximate minimum side distance of minimumSide.
+// The minimum distance is enforced from the center of the bounding box along both axes,
+// which makes it an approximation that's only good to use over large areas far from the poles.
++ (CLCoordinateRect) boundingBoxContainingLocations: (NSArray*)locations minimumSide:(CLLocationDistance)minimumSide {
+    CLCoordinateRect result;
+
+    if ([locations count] == 0) {
+        return result;
+    }
+
+    result = [CLLocation boundingBoxContainingLocations:locations];
+
+    // Stretch the lognitude if necessary
+    CLLocationCoordinate2D center = CLLocationCoordinate2DMake(
+      (result.topLeft.latitude + result.bottomRight.latitude) / 2,
+      (result.topLeft.longitude  + result.bottomRight.longitude) / 2
+    );
+
+    CLLocationCoordinate2D leftMiddle = CLLocationCoordinate2DMake(
+      (result.topLeft.latitude + result.bottomRight.latitude) / 2,
+      result.topLeft.longitude
+    );
+    CLLocationDistance curvedMidWidth = 2 * [CLLocation distanceFromCoordinate:center toCoordinate:leftMiddle];
+
+    if (curvedMidWidth < minimumSide) {
+        CLLocationCoordinate2D newLeftMiddle = [CLLocation
+                                                coordinateAtDistance:minimumSide / 2
+                                                fromCoordinate:center
+                                                toCoordinate:leftMiddle];
+        CLLocationCoordinate2D newRightMiddle = [CLLocation
+                                                 coordinateAtDistance:minimumSide
+                                                 fromCoordinate:newLeftMiddle
+                                                 toCoordinate:center];
+        result.topLeft = CLLocationCoordinate2DMake(result.topLeft.latitude, newLeftMiddle.longitude);
+        result.bottomRight = CLLocationCoordinate2DMake(result.bottomRight.latitude, newRightMiddle.longitude);
+    }
+
+    // Stretch the latitude if necessary
+    CLLocationCoordinate2D topMiddle = CLLocationCoordinate2DMake(
+      result.topLeft.latitude,
+      (result.topLeft.longitude + result.bottomRight.longitude) / 2
+    );
+    CLLocationDistance curvedMidHeight = 2 * [CLLocation distanceFromCoordinate:center toCoordinate:topMiddle];
+
+    if (curvedMidHeight < minimumSide) {
+        CLLocationCoordinate2D newTopMiddle = [CLLocation
+                                                coordinateAtDistance:minimumSide / 2
+                                                fromCoordinate:center
+                                                toCoordinate:topMiddle];
+        CLLocationCoordinate2D newBottomMiddle = [CLLocation
+                                                 coordinateAtDistance:minimumSide
+                                                 fromCoordinate:newTopMiddle
+                                                 toCoordinate:center];
+        result.topLeft = CLLocationCoordinate2DMake(newTopMiddle.latitude, result.topLeft.longitude);
+        result.bottomRight = CLLocationCoordinate2DMake(newBottomMiddle.latitude, result.bottomRight.longitude);
+    }
     return result;
 }
 
 
-//returns a direction (in degrees) between the receiver and the given location 
+//returns a direction (in degrees) between the receiver and the given location
 - (CLLocationDirection)directionToLocation:(CLLocation*)location;
-{    
+{
     return [CLLocation directionFromCoordinate:self.coordinate toCoordinate:location.coordinate];
-    
+
 }
 
-//returns a direction (in degrees) between an origin (from) coordinate and a destination (to) coordinate 
+//returns a direction (in degrees) between an origin (from) coordinate and a destination (to) coordinate
 + (CLLocationDirection) directionFromCoordinate:(CLLocationCoordinate2D)fromCoord toCoordinate:(CLLocationCoordinate2D) toCoord;
-{	
+{
 	//double tc1; //angle between current location and target location
 	//double dlat = location.coordinate.latitude - currLocation.coordinate.latitude;
 	//convert to radians
@@ -241,21 +300,21 @@
 	double toLong = toCoord.longitude * kDegreesToRadians;
 	double fromLat = fromCoord.latitude * kDegreesToRadians;
 	double toLat = toCoord.latitude * kDegreesToRadians;
-	
-	double dlon = toLong - fromLong; 
+
+	double dlon = toLong - fromLong;
 	double y = sin(dlon)*cos(toLat);
 	double x = cos(fromLat)*sin(toLat)-sin(fromLat)*cos(toLat)*cos(dlon);
-	
+
 	double direction = atan2(y,x);
-    
+
     // convert to degrees
-    direction = direction * kRadiansToDegrees; 
+    direction = direction * kRadiansToDegrees;
     // normalize
     double fraction = modf(direction + 360.0, &direction);
     direction += fraction;
-    
+
     return direction;
-	
+
 }
 
 
@@ -268,46 +327,46 @@
 
 //========================================================================================
 //
-// DistancePointLine 
+// DistancePointLine
 
 
 + (float) magnitudeFromCoordinate: (CLLocationCoordinate2D)coord1 toCoordinate:(CLLocationCoordinate2D)coord2
 {
     CLLocationCoordinate2D vector;
-    
+
     vector.latitude = coord2.latitude - coord1.latitude;
     vector.longitude = coord2.longitude - coord1.longitude;
-    
+
     return (float)sqrt( pow(vector.latitude,2) + pow(vector.longitude, 2));
 }
 
 
-- (CLLocationDistance) distanceFromLineWithStartLocation:(CLLocation*) start 
-                                             endLocation:(CLLocation*) end 
+- (CLLocationDistance) distanceFromLineWithStartLocation:(CLLocation*) start
+                                             endLocation:(CLLocation*) end
                                             intersection:(CLLocation**) intersection;
 {
-        
+
     double lineMag;
     float U;
-        
+
     lineMag = [CLLocation magnitudeFromCoordinate:end.coordinate toCoordinate:start.coordinate];
-    
+
     U = ( ( ( self.coordinate.latitude - start.coordinate.latitude ) * ( end.coordinate.latitude - start.coordinate.latitude ) ) +
          ( ( self.coordinate.longitude - start.coordinate.longitude ) * ( end.coordinate.longitude - start.coordinate.longitude ) ) ) / pow(lineMag, 2);
-    
+
     if( U < 0.0f || U > 1.0f )
         return -1;   // closest point does not fall within the line segment
-    
+
     CLLocationCoordinate2D intCoord;
     intCoord.latitude = start.coordinate.latitude + U * ( end.coordinate.latitude - start.coordinate.latitude );
     intCoord.longitude = start.coordinate.longitude + U * ( end.coordinate.longitude - start.coordinate.longitude );
     *intersection = [[CLLocation alloc] initWithLatitude:intCoord.latitude longitude:intCoord.longitude];
-        
+
     double distance = [self distanceFromLocation:*intersection];
-    
+
     Release(*intersection);
-    
-    return distance;    
+
+    return distance;
 }
 
 

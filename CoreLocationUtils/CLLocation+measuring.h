@@ -89,6 +89,8 @@ typedef struct {
 // returns the bounding box which contains all CLLocations in locations array
 + (CLCoordinateRect) boundingBoxContainingLocations: (NSArray*)locations;
 
++ (CLCoordinateRect) boundingBoxContainingLocations: (NSArray*)locations minimumSide:(CLLocationDistance)minimumSide;
+
 + (CLCoordinateRect) minimumBoundingBoxContainingLocations: (NSArray*)locations;
 
 // checks if coordinate is valid and non-zero
