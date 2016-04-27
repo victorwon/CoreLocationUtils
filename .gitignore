@@ -19,3 +19,4 @@ DerivedData
 
 # IDEA
 .idea
+*.DS_Store
